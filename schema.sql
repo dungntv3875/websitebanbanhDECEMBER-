@@ -337,11 +337,16 @@ CREATE TABLE `products` (
 -- Tạo tồn kho của tất cả sản phẩm tự đặt lại thành 30 vào ngày mới
 SET GLOBAL event_scheduler = ON;
 
+SET time_zone = 'SYSTEM';
+DROP EVENT IF EXISTS reset_product_stock_daily;
+
 CREATE EVENT IF NOT EXISTS reset_product_stock_daily
 ON SCHEDULE EVERY 1 DAY
 STARTS TIMESTAMP(CURRENT_DATE + INTERVAL 1 DAY)
 DO
   UPDATE products SET stock = 30;
+SET time_zone = '+00:00';
+
 
 -- ----------------------------------------------------
 --
