@@ -9,7 +9,7 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
 }
  
 $user = $_SESSION['user'];  // thông tin admin đang đăng nhập
-$tab  = $_GET['tab'] ?? 'dashboard';  // tab hiện tại (dashboard/order
+$tab  = $_GET['tab'] ?? 'dashboard';  // tab hiện tại (dashboard/order)
 
 $msg  = '';
 $msg_type = '';
