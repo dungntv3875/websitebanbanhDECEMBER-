@@ -12,29 +12,6 @@ try {
     );
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // Đảm bảo bảng favorites luôn có cấu trúc đúng để lưu và hiển thị sản phẩm yêu thích.
-    $pdo->exec("
-        CREATE TABLE IF NOT EXISTS favorites (
-            id INT NOT NULL AUTO_INCREMENT,
-            user_id INT NOT NULL,
-            product_id INT NOT NULL,
-            PRIMARY KEY (id),
-            UNIQUE KEY unique_user_product (user_id, product_id)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
-    ");
-
-    try {
-        $pdo->exec("ALTER TABLE favorites MODIFY id INT NOT NULL AUTO_INCREMENT");
-    } catch (Throwable $e) {
-        // Bỏ qua nếu cột đã đúng cấu trúc.
-    }
-
-    try {
-        $pdo->exec("ALTER TABLE favorites ADD UNIQUE KEY unique_user_product (user_id, product_id)");
-    } catch (Throwable $e) {
-        // Bỏ qua nếu unique key đã tồn tại.
-    }
-
     // Lưu ngày reset tồn kho gần nhất.
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS daily_stock_reset (
