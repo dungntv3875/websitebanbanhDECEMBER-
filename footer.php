@@ -113,8 +113,13 @@ document.querySelectorAll('.btn-favorite').forEach(btn => {
                 button.innerHTML = "❤️ Đã yêu thích";
             }
             else if(data.trim() === 'removed'){
-                button.classList.remove('active');
-                button.innerHTML = "❤️ Yêu thích";
+                const favoriteItem = button.closest('.favorite-product-item');
+                if (favoriteItem) {
+                    favoriteItem.remove();
+                } else {
+                    button.classList.remove('active');
+                    button.innerHTML = "❤️ Yêu thích";
+                }
             }
         });
     });
