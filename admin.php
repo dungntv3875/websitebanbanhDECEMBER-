@@ -396,7 +396,7 @@ function statusLabel($status) {
                 <div class="col-md-3">
                     <div class="stat-card">
                         <div class="stat-icon" style="background:#eaf4fb;">
-                            <i class="fa-solid fa-shirt" style="color:#2980b9;"></i>
+                            <span role="img" aria-label="Donut">&#x1F369;</span>
                         </div>
                         <div>
                             <h3><?php echo $stat_products; ?></h3>
