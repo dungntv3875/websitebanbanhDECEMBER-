@@ -2,38 +2,43 @@
 session_start();
 include 'db.php';
 
-if(!isset($_SESSION['user'])){
-    header("Location: account.php?type=login"); // type=login khớp với logic của bạn
+if (!isset($_SESSION['user'])) {
+    header("Location: account.php?type=login");
     exit;
 }
-// Lấy ID từ trong mảng user
-$user_id = $_SESSION['user']['id'];
 
+$user_id = (int)($_SESSION['user']['id'] ?? 0);
 
-// Xử lý khi dùng AJAX trái tim (POST)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['product_id'])) {
-    $product_id = $_POST['product_id'];
-    $check = $pdo->prepare("SELECT * FROM favorites WHERE user_id=? AND product_id=?");
-    $check->execute([$user_id, $product_id]);
+    $product_id = (int)$_POST['product_id'];
 
-    if ($check->rowCount() > 0) {
-        $pdo->prepare("DELETE FROM favorites WHERE user_id=? AND product_id=?")
-            ->execute([$user_id, $product_id]);
-        echo "removed";
-    } else {
-        $pdo->prepare("INSERT INTO favorites(user_id, product_id) VALUES(?, ?)")
-            ->execute([$user_id, $product_id]);
-        echo "added";
+    if ($product_id > 0 && $user_id > 0) {
+        $check = $pdo->prepare("SELECT 1 FROM favorites WHERE user_id = ? AND product_id = ? LIMIT 1");
+        $check->execute([$user_id, $product_id]);
+
+        if ($check->fetchColumn()) {
+            $pdo->prepare("DELETE FROM favorites WHERE user_id = ? AND product_id = ?")
+                ->execute([$user_id, $product_id]);
+            echo "removed";
+        } else {
+            $pdo->prepare("INSERT INTO favorites(user_id, product_id) VALUES(?, ?)
+                ->execute([$user_id, $product_id]);
+            echo "added";
+        }
     }
     exit;
 }
 
-// Nếu là GET (click icon ❤ ở header)
-$sql = "SELECT p.* FROM products p 
-        JOIN favorites f ON p.id = f.product_id 
-        WHERE f.user_id = ?";
+$sql = "
+    SELECT p.*
+    FROM products p
+    INNER JOIN favorites f ON p.id = f.product_id
+    WHERE f.user_id = ?
+    ORDER BY f.id DESC
+";
 $stmt = $pdo->prepare($sql);
 $stmt->execute([$user_id]);
+$favoriteProducts = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html>
@@ -47,35 +52,27 @@ $stmt->execute([$user_id]);
 <div class="container mt-5">
   <h3>Sản phẩm yêu thích</h3>
   <div class="row">
-    <?php 
-    // Thực hiện lấy dữ liệu
-    $stmt->execute([$user_id]); 
-    $has_favorites = false;
-
-    // Vòng lặp hiển thị từng sản phẩm
-    while($row = $stmt->fetch(PDO::FETCH_ASSOC)){ 
-        $has_favorites = true;
-    ?>
-      <div class="col-md-3 mb-4">
-        <div class="card">
-          <?php 
-    // Tách chuỗi ảnh thành một mảng dựa trên dấu phẩy
-    $images = explode(',', $row['image']);
-    // Lấy phần tử đầu tiên trong mảng
-    $first_image = trim($images[0]); 
-?>
-<img src="uploads/<?php echo $first_image; ?>" class="card-img-top" alt="<?php echo htmlspecialchars($row['name']); ?>">
-          <div class="card-body text-center">
-            <h6><?php echo $row['name']; ?></h6>
-            <p class="price"><?php echo number_format($row['price']); ?>đ</p>
-            <a href="product.php?id=<?php echo $row['id']; ?>" class="btn btn-sm btn-primary">Xem chi tiết</a>
-          </div>
+    <?php if (empty($favoriteProducts)): ?>
+        <div class="col-12">
+            <p class="mt-3">Bạn chưa có sản phẩm yêu thích nào.</p>
         </div>
-      </div>
-    <?php } ?>
-
-    <?php if(!$has_favorites): ?>
-        <p>Bạn chưa có sản phẩm yêu thích nào.</p>
+    <?php else: ?>
+        <?php foreach ($favoriteProducts as $row): ?>
+          <div class="col-md-3 mb-4">
+            <div class="card h-100">
+              <?php
+                $images = array_filter(array_map('trim', explode(',', $row['image'] ?? '')));
+                $first_image = !empty($images) ? reset($images) : 'default.jpg';
+              ?>
+              <img src="uploads/<?php echo htmlspecialchars($first_image); ?>" class="card-img-top" alt="<?php echo htmlspecialchars($row['name']); ?>">
+              <div class="card-body text-center">
+                <h6><?php echo htmlspecialchars($row['name']); ?></h6>
+                <p class="price"><?php echo number_format((float)$row['price']); ?>đ</p>
+                <a href="product.php?id=<?php echo $row['id']; ?>" class="btn btn-sm btn-primary">Xem chi tiết</a>
+              </div>
+            </div>
+          </div>
+        <?php endforeach; ?>
     <?php endif; ?>
   </div>
 </div>
