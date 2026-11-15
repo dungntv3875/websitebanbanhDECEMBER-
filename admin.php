@@ -1,16 +1,20 @@
 <?php
+// Khởi tạo session để đọc thông tin đăng nhập và nạp kết nối cơ sở dữ liệu.
 session_start();
 include 'db.php';
  
-// ===== KIỂM TRA QUYỀN ADMIN =====
+// Chỉ tài khoản có vai trò admin mới được xem hoặc thao tác trên trang quản trị.
 if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
     header("Location: account.php");
     exit;
 }
  
-$user = $_SESSION['user'];  // thông tin admin đang đăng nhập
-$tab  = $_GET['tab'] ?? 'dashboard';  // tab hiện tại (dashboard/order
+// Lưu thông tin admin để hiển thị tên và ngăn tự khóa tài khoản đang đăng nhập.
+$user = $_SESSION['user'];
+// Chọn khu vực quản trị theo tham số URL; mặc định hiển thị dashboard.
+$tab  = $_GET['tab'] ?? 'dashboard';
 
+// Thông báo thao tác được hiển thị sau khi xử lý action hoặc biểu mẫu.
 $msg  = '';
 $msg_type = '';
  
@@ -19,6 +23,7 @@ $msg_type = '';
 // ============================================================
  
 // ----- ĐƠN HÀNG: đổi trạng thái -----
+// Chỉ chấp nhận các trạng thái hợp lệ rồi lưu trạng thái mới bằng truy vấn tham số.
 if (isset($_GET['action']) && $_GET['action'] === 'update_status') {
     $order_id  = (int)$_GET['id'];
     $new_status = $_GET['status'] ?? '';
@@ -32,6 +37,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'update_status') {
 }
 
 // ----- YÊU CẦU HỦY: duyệt/từ chối -----
+// Khi duyệt yêu cầu, đồng thời chuyển trạng thái đơn hàng liên quan sang cancelled.
 if (isset($_GET['action']) && $_GET['action'] === 'review_cancel') {
     $cid    = (int)$_GET['id'];
     $result = $_GET['result'] ?? '';
@@ -50,6 +56,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'review_cancel') {
 }
 
 // ----- YÊU CẦU HOÀN: duyệt/từ chối -----
+// Ghi nhận kết quả xét duyệt cho yêu cầu hoàn hàng và quay lại tab yêu cầu.
 if (isset($_GET['action']) && $_GET['action'] === 'review_return') {
     $rid    = (int)$_GET['id'];
     $result = $_GET['result'] ?? '';
@@ -62,6 +69,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'review_return') {
 }
  
 // ----- SẢN PHẨM: xóa -----
+// Xóa sản phẩm theo ID nhận từ URL, sau đó hiển thị thông báo ở danh sách sản phẩm.
 if (isset($_GET['action']) && $_GET['action'] === 'delete_product') {
     $pdo->prepare("DELETE FROM products WHERE id = ?")->execute([(int)$_GET['id']]);
     $msg = 'Đã xóa sản phẩm.';
@@ -70,6 +78,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'delete_product') {
 }
  
 // ----- SẢN PHẨM: thêm mới -----
+// Nhận dữ liệu biểu mẫu, lưu các ảnh tải lên và tạo bản ghi sản phẩm mới.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
     $name        = trim($_POST['name']);
     $category_id = (int)$_POST['category_id'];
@@ -98,6 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
 }
  
 // ----- SẢN PHẨM: sửa -----
+// Đọc danh sách ảnh hiện tại, bỏ ảnh được đánh dấu xóa, thêm ảnh mới rồi cập nhật sản phẩm.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_product'])) {
     $id          = (int)$_POST['product_id'];
     $name        = trim($_POST['name']);
@@ -142,6 +152,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_product'])) {
 }
  
 // ----- DANH MỤC: thêm -----
+// Tạo danh mục; parent_id để trống được lưu dưới dạng NULL (danh mục cấp cao nhất).
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_category'])) {
     $name      = trim($_POST['cat_name']);
     $parent_id = $_POST['parent_id'] !== '' ? (int)$_POST['parent_id'] : null;
@@ -152,6 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_category'])) {
 }
  
 // ----- DANH MỤC: xóa -----
+// Xóa danh mục theo ID và chuyển về danh sách để người quản trị thấy kết quả.
 if (isset($_GET['action']) && $_GET['action'] === 'delete_category') {
     $pdo->prepare("DELETE FROM categories WHERE id = ?")->execute([(int)$_GET['id']]);
     $msg = 'Đã xóa danh mục.';
@@ -160,6 +172,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'delete_category') {
 }
  
 // ----- DANH MỤC: sửa -----
+// Cập nhật tên và danh mục cha; cho phép bỏ chọn danh mục cha để đưa về cấp cao nhất.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_category'])) {
     $id        = (int)$_POST['cat_id'];
     $name      = trim($_POST['cat_name']);
@@ -171,6 +184,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_category'])) {
 }
 
 // ----- NGƯỜI DÙNG: khóa / mở tài khoản -----
+// Đảo trạng thái hoạt động của tài khoản; không cho phép admin tự khóa chính mình.
 if (isset($_GET['action']) && $_GET['action'] === 'toggle_active') {
     $uid = (int)$_GET['id'];
     if ((int)$uid !== (int)$user['id']) {
@@ -189,6 +203,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'toggle_active') {
 }
 
 // ----- NGƯỜI DÙNG: đổi vai trò -----
+// Chỉ nhận vai trò admin/user hợp lệ và không đổi vai trò của tài khoản hiện tại.
 if (isset($_GET['action']) && $_GET['action'] === 'update_role') {
     $uid      = (int)$_GET['id'];
     $new_role = $_GET['role'] ?? '';
@@ -203,10 +218,12 @@ if (isset($_GET['action']) && $_GET['action'] === 'update_role') {
 // ============================================================
 // LẤY DỮ LIỆU THEO TAB
 // ============================================================
+// Khởi tạo các tập dữ liệu dùng trong giao diện; chỉ truy vấn danh sách cần thiết cho tab.
 $orders = $products = $categories = $users_list = [];
 $order_items_map = [];
 
 if ($tab === 'dashboard' || $tab === 'orders') {
+    // Lấy đơn mới nhất cùng tên tài khoản và gom các dòng sản phẩm theo mã đơn.
     $orders = $pdo->query("SELECT o.*, u.name as user_name FROM orders o LEFT JOIN users u ON o.user_id = u.id ORDER BY o.created_at DESC")->fetchAll();
 
     $order_items_map = [];
@@ -228,14 +245,14 @@ if ($tab === 'users') {
     $users_list = $pdo->query("SELECT * FROM users ORDER BY id DESC")->fetchAll();
 }
  
-// Dashboard stats
+// Tổng hợp số liệu hiển thị trên các thẻ thống kê của dashboard và số đơn chờ xử lý.
 $stat_orders   = $pdo->query("SELECT COUNT(*) FROM orders")->fetchColumn();
 $stat_revenue  = $pdo->query("SELECT SUM(total) FROM orders WHERE status != 'cancelled'")->fetchColumn() ?? 0;
 $stat_products = $pdo->query("SELECT COUNT(*) FROM products")->fetchColumn();
 $stat_users    = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
 $stat_pending  = $pdo->query("SELECT COUNT(*) FROM orders WHERE status='pending'")->fetchColumn();
  
-// Sản phẩm cần sửa
+// Tải trước bản ghi cần sửa để điền dữ liệu hiện tại vào biểu mẫu.
 $edit_product_data = null;
 if ($tab === 'edit_product' && isset($_GET['id'])) {
     $stmt = $pdo->prepare("SELECT * FROM products WHERE id = ?");
@@ -250,9 +267,7 @@ if ($tab === 'edit_category' && isset($_GET['id'])) {
     $edit_category_data = $stmt->fetch();
 }
 
-// ===== statusLabel(): chuyển status sang nhãn tiếng Việt + màu badge =====
-// Dùng ở tab dashboard và orders
-
+// Chuyển mã trạng thái đơn hàng thành nhãn tiếng Việt và màu badge trên giao diện.
 function statusLabel($status) {
     switch ($status) {
         case 'pending':   return ['label' => 'Chờ xác nhận', 'color' => '#f39c12'];
@@ -920,7 +935,7 @@ $labels = ['pending'=>'Chờ duyệt','approved'=>'Đã duyệt','rejected'=>'T�
     let activeUserName = '';
     let lastMsgId      = 0;
     let pollTimer      = null;
-// ── Tải danh sách user ─────────────────────────────
+// Lấy danh sách hội thoại, dựng phần xem trước và đồng bộ tổng số tin chưa đọc.
     async function loadUsers() {
         const res  = await fetch(`${API}?action=get_users`);
         const data = await res.json();
@@ -959,7 +974,7 @@ $labels = ['pending'=>'Chờ duyệt','approved'=>'Đã duyệt','rejected'=>'T�
         }
     }
             
-        // ── Chọn user để chat ─────────────────────────
+    // Chọn khách đang trao đổi, tải tin nhắn ban đầu và bắt đầu làm mới định kỳ.
     window.selectUser = async function(userId, userName) {
         activeUserId   = userId;
         activeUserName = userName;
@@ -976,7 +991,7 @@ $labels = ['pending'=>'Chờ duyệt','approved'=>'Đã duyệt','rejected'=>'T�
         clearInterval(pollTimer);
         pollTimer = setInterval(loadMessages, 3000);
     };
-         // ── Load messages ────────────────────────────
+    // Chỉ tải tin có ID lớn hơn tin cuối đã hiển thị để tránh lặp tin nhắn.
     async function loadMessages() {
         if (!activeUserId) return;
         const res  = await fetch(`${API}?action=get_messages&user_id=${activeUserId}&since_id=${lastMsgId}`);
@@ -999,6 +1014,7 @@ $labels = ['pending'=>'Chờ duyệt','approved'=>'Đã duyệt','rejected'=>'T�
     }
 
     async function sendMessage() {
+        // Gửi nội dung đang nhập tới API cho khách được chọn rồi tải lại cuộc trò chuyện.
         const input = document.getElementById('admin-chat-input');
         const msg   = input.value.trim();
         if (!msg || !activeUserId) return;
@@ -1021,9 +1037,11 @@ $labels = ['pending'=>'Chờ duyệt','approved'=>'Đã duyệt','rejected'=>'T�
         this.style.height = Math.min(this.scrollHeight, 100) + 'px';
     });
 
+    // Mã hóa ký tự HTML đặc biệt trước khi chèn nội dung động vào giao diện chat.
     function escHtml(str) {
         return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
+    // Định dạng thời gian ngắn gọn: chỉ giờ trong ngày hôm nay, thêm ngày với tin cũ.
     function formatTime(dt) {
         const d   = new Date(dt);
         const now = new Date();
@@ -1127,6 +1145,7 @@ $labels = ['pending'=>'Chờ duyệt','approved'=>'Đã duyệt','rejected'=>'T�
 // ===== MODAL CHI TIẾT ĐƠN HÀNG =====
 const orderItemsData = <?php echo json_encode($order_items_map); ?>;
 
+// Dựng các dòng sản phẩm, tính tổng tiền và mở modal cho đơn được chọn.
 function showOrderItems(orderId) {
     const items = orderItemsData[orderId] || [];
     document.getElementById('modal-order-id').textContent = '#' + orderId;
@@ -1168,6 +1187,7 @@ function showOrderItems(orderId) {
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 // ===== PREVIEW ẢNH TRƯỚC KHI UPLOAD =====
+// Hiển thị bản xem trước ảnh ngay khi người quản trị chọn tệp trong biểu mẫu.
 document.addEventListener('change', function(e) {
     if (e.target && e.target.name === 'images[]') {
         const preview = e.target.closest('form').querySelector('[id^="preview-"]');
