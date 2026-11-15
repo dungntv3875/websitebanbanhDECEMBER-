@@ -429,7 +429,6 @@ function returnWindowNote($orderCreatedAt) {
             <select id="req-reason-select" class="form-select mb-2" onchange="document.getElementById('req-reason').value=this.value==='other'?'':this.value">
                 <option value="">-- Chọn lý do --</option>
                 <option value="Đặt nhầm sản phẩm">Đặt nhầm sản phẩm</option>
-                <option value="Muốn đổi size / màu khác">Muốn đổi size / màu khác</option>
                 <option value="Sản phẩm bị lỗi / hư hỏng">Sản phẩm bị lỗi / hư hỏng</option>
                 <option value="Không còn nhu cầu mua">Không còn nhu cầu mua</option>
                 <option value="other">Lý do khác...</option>
