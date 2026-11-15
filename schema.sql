@@ -27,6 +27,7 @@ SET time_zone = "+00:00";
 -- Cấu trúc bảng cho bảng `admin_chats`
 --
 
+-- Lưu hội thoại giữa khách hàng và quản trị viên; is_read dùng để đếm tin chưa đọc.
 CREATE TABLE `admin_chats` (
   `id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
@@ -67,6 +68,7 @@ INSERT INTO `admin_chats` (`id`, `user_id`, `sender`, `message`, `is_read`, `cre
 -- Cấu trúc bảng cho bảng `cart`
 --
 
+-- Lưu các sản phẩm khách đang chọn mua cùng số lượng trong giỏ hàng.
 CREATE TABLE `cart` (
   `id` int(11) NOT NULL,
   `user_id` int(11) DEFAULT NULL,
@@ -88,6 +90,7 @@ INSERT INTO `cart` (`id`, `user_id`, `product_id`, `quantity`) VALUES
 -- Cấu trúc bảng cho bảng `categories`
 --
 
+-- Lưu danh mục; parent_id trỏ tới danh mục cha để hỗ trợ phân cấp.
 CREATE TABLE `categories` (
   `id` int(11) NOT NULL,
   `name` varchar(100) DEFAULT NULL,
@@ -112,6 +115,7 @@ INSERT INTO `categories` (`id`, `name`, `parent_id`) VALUES
 -- Cấu trúc bảng cho bảng `favorites`
 --
 
+-- Lưu danh sách sản phẩm yêu thích của từng tài khoản.
 CREATE TABLE `favorites` (
   `id` int(11) NOT NULL,
   `user_id` int(11) DEFAULT NULL,
@@ -151,6 +155,7 @@ INSERT INTO `favorites` (`id`, `user_id`, `product_id`) VALUES
 -- Cấu trúc bảng cho bảng `orders`
 --
 
+-- Lưu thông tin giao hàng, thanh toán, tổng tiền và trạng thái của mỗi đơn.
 CREATE TABLE `orders` (
   `id` int(11) NOT NULL,
   `user_id` int(11) DEFAULT NULL,
@@ -210,6 +215,7 @@ INSERT INTO `orders`
 -- Cấu trúc bảng cho bảng `order_cancellations`
 --
 
+-- Lưu yêu cầu hủy đơn của khách và kết quả xét duyệt cùng ghi chú của admin.
 CREATE TABLE `order_cancellations` (
   `id` int(11) NOT NULL,
   `order_id` int(11) NOT NULL,
@@ -237,6 +243,7 @@ INSERT INTO `order_cancellations` (`id`, `order_id`, `user_id`, `reason`, `statu
 -- Cấu trúc bảng cho bảng `order_items`
 --
 
+-- Lưu từng sản phẩm thuộc đơn hàng, bao gồm số lượng và giá tại thời điểm đặt.
 CREATE TABLE `order_items` (
   `id` int(11) NOT NULL,
   `order_id` int(11) DEFAULT NULL,
@@ -292,6 +299,7 @@ INSERT INTO `order_items` (`id`, `order_id`, `product_id`, `quantity`, `price`) 
 -- Cấu trúc bảng cho bảng `order_returns`
 --
 
+-- Lưu yêu cầu hoàn hàng, trạng thái xét duyệt và ảnh khách gửi kèm (nếu có).
 CREATE TABLE `order_returns` (
   `id` int(11) NOT NULL,
   `order_id` int(11) NOT NULL,
@@ -323,6 +331,7 @@ INSERT INTO `order_returns` (`id`, `order_id`, `user_id`, `reason`, `status`) VA
 -- Cấu trúc bảng cho bảng `products`
 --
 
+-- Lưu thông tin sản phẩm, giá bán, ảnh, mô tả và số lượng tồn kho.
 CREATE TABLE `products` (
   `id` int(11) NOT NULL,
   `category_id` int(11) DEFAULT NULL,
@@ -334,19 +343,18 @@ CREATE TABLE `products` (
   `sale_price` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Tạo tồn kho của tất cả sản phẩm tự đặt lại thành 30 vào ngày mới
+-- Bật bộ lập lịch và tạo tác vụ hằng ngày đặt tồn kho sản phẩm về 30.
+-- Dùng múi giờ hệ thống để tính giờ chạy, sau đó đặt múi giờ phiên về UTC.
 SET GLOBAL event_scheduler = ON;
 
 SET time_zone = 'SYSTEM';
 DROP EVENT IF EXISTS reset_product_stock_daily;
-
 CREATE EVENT IF NOT EXISTS reset_product_stock_daily
 ON SCHEDULE EVERY 1 DAY
 STARTS TIMESTAMP(CURRENT_DATE + INTERVAL 1 DAY)
 DO
   UPDATE products SET stock = 30;
 SET time_zone = '+00:00';
-
 
 -- ----------------------------------------------------
 --
@@ -407,6 +415,7 @@ INSERT INTO `products` (`id`, `category_id`, `name`, `price`, `image`, `descript
 -- Cấu trúc bảng cho bảng `reviews`
 --
 
+-- Lưu đánh giá sản phẩm theo người mua và đơn hàng; chỉ mục unique hạn chế đánh giá trùng.
 CREATE TABLE `reviews` (
   `id` int(11) NOT NULL,
   `product_id` int(11) NOT NULL,
@@ -437,6 +446,7 @@ INSERT INTO `reviews` (`id`, `product_id`, `user_id`, `order_id`, `rating`, `com
 -- Cấu trúc bảng cho bảng `users`
 --
 
+-- Lưu tài khoản đăng nhập, vai trò phân quyền và trạng thái hoạt động.
 CREATE TABLE `users` (
   `id` int(11) NOT NULL,
   `name` varchar(100) DEFAULT NULL,
@@ -459,6 +469,7 @@ INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `is_active`) VAL
 --
 -- Chỉ mục cho bảng `admin_chats`
 --
+-- Khóa chính định danh tin nhắn; các chỉ mục hỗ trợ lọc hội thoại theo khách và thời gian.
 ALTER TABLE `admin_chats`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_user_id` (`user_id`),
@@ -604,6 +615,7 @@ ALTER TABLE `users`
 --
 -- Các ràng buộc cho bảng `categories`
 --
+-- Xóa danh mục cha sẽ xóa các danh mục con tham chiếu tới danh mục đó.
 ALTER TABLE `categories`
   ADD CONSTRAINT `fk_parent` FOREIGN KEY (`parent_id`) REFERENCES `categories` (`id`) ON DELETE CASCADE;
 COMMIT;
