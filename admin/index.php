@@ -1,6 +1,8 @@
 <?php
+// Khởi động session để kiểm tra tài khoản và vai trò quản trị.
 session_start();
 
+// Chặn người chưa đăng nhập hoặc không có quyền admin truy cập dashboard.
 if(!isset($_SESSION['user']) || $_SESSION['user']['role'] != 'admin'){
     header("Location: ../index.php");
     exit;
@@ -20,7 +22,7 @@ if(!isset($_SESSION['user']) || $_SESSION['user']['role'] != 'admin'){
 <div class="container-fluid">
     <div class="row">
 
-        <!-- Sidebar -->
+        <!-- Thanh điều hướng tới dashboard và các khu vực quản lý trong admin. -->
         <div class="col-md-2 bg-dark text-white min-vh-100 p-3">
 
             <h4>December Admin</h4>
@@ -68,7 +70,7 @@ if(!isset($_SESSION['user']) || $_SESSION['user']['role'] != 'admin'){
 
         </div>
 
-        <!-- Content -->
+        <!-- Nội dung dashboard; các thẻ hiện là số liệu minh họa tĩnh. -->
         <div class="col-md-10 p-4">
 
             <h2>Dashboard</h2>
