@@ -1,9 +1,10 @@
+/* Thiết lập nền và kiểu chữ mặc định cho giao diện quản trị. */
 body{
     background: #f5f6fa;
     font-family: Arial, sans-serif;
 }
 
-/* Sidebar */
+/* Cố định thanh điều hướng bên trái và giữ chiều cao tối thiểu bằng màn hình. */
 .sidebar{
     width: 260px;
     min-height: 100vh;
@@ -21,6 +22,7 @@ body{
 }
 
 .sidebar a{
+    /* Biến từng liên kết thành một hàng điều hướng dễ bấm. */
     display: block;
     color: #d1d5db;
     text-decoration: none;
@@ -31,17 +33,18 @@ body{
 }
 
 .sidebar a:hover{
+    /* Làm nổi bật mục điều hướng khi rê chuột. */
     background: #2563eb;
     color: white;
 }
 
-/* Content */
+/* Đẩy vùng nội dung sang phải để không nằm dưới sidebar cố định. */
 .main{
     margin-left: 260px;
     padding: 30px;
 }
 
-/* Topbar */
+/* Thanh tiêu đề trên cùng, căn hai đầu nội dung theo chiều ngang. */
 .topbar{
     background: white;
     padding: 15px 25px;
@@ -53,7 +56,7 @@ body{
     align-items: center;
 }
 
-/* Cards */
+/* Thẻ dashboard có nền trắng, góc bo và hiệu ứng nâng nhẹ khi rê chuột. */
 .dashboard-card{
     background: white;
     border-radius: 20px;
@@ -67,16 +70,18 @@ body{
 }
 
 .dashboard-card h5{
+    /* Tiêu đề phụ dùng màu nhạt để phân biệt với số liệu chính. */
     color: #6b7280;
     margin-bottom: 10px;
 }
 
 .dashboard-card h2{
+    /* Nhấn mạnh số liệu chính và bỏ khoảng cách mặc định của tiêu đề. */
     font-weight: bold;
     margin: 0;
 }
 
-/* Table */
+/* Khung nền và đổ bóng bao quanh khu vực bảng dữ liệu. */
 .table-box{
     background: white;
     padding: 20px;
@@ -84,7 +89,7 @@ body{
     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
 }
 
-/* Button */
+/* Kiểu nút dùng chung và trạng thái đậm hơn khi rê chuột. */
 .btn-custom{
     background: #2563eb;
     color: white;
